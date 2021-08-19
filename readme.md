@@ -1,3 +1,174 @@
+Commands
+
+VM Prepare Steps 
+(RUN THIS ON VM BEFOREHAND)
+
+sudo apt update
+sudo apt install curl git maven openjdk-11-jdk
+
+Run/ Git Clone and Maven once so items are cached
+---
+
+git clone https://github.com/spring-projects/spring-petclinic
+
+cd spring-petclinic
+
+./mvnw package
+
+cd ..
+
+Rm -rf spring-petclinic
+
+
+
+INFRA
+
+Go To Olly UI
+
+Hamburguer Menu > Data Setup
+
+Linux > Add Connection
+
+Copy Command
+
+curl -sSL https://dl.signalfx.com/splunk-otel-collector.sh > /tmp/splunk-otel-collector.sh && \
+sudo sh /tmp/splunk-otel-collector.sh --realm us1 -- 7kGZ__HJWzhTvAa9D_5TDA --mode agent
+
+(see agent)
+
+Hamburguer Menu > Infrastructure > My Data Center
+
+Show Infrastructure
+
+
+APM
+Go to Terminal
+
+git clone https://github.com/spring-projects/spring-petclinic
+
+cd spring-petclinic
+
+./mvnw package -Dmaven.test.skip=true
+
+java -jar target/spring-petclinic-2.4.5.jar
+
+curl localhost:8080
+
+(app is Running)
+
+Hamburger Menu > Data Setup > APM Instrumentation
+
+Java > Add Connection
+
+curl -L https://github.com/signalfx/splunk-otel-java/releases/latest/download/splunk-otel-javaagent-all.jar -o splunk-otel-javaagent.jar
+
+export OTEL_SERVICE_NAME='petclinic'
+export OTEL_RESOURCE_ATTRIBUTES='deployment.environment=conf21,version=0.314'
+export OTEL_EXPORTER_OTLP_ENDPOINT='http://localhost:4317'
+
+java  -javaagent:./splunk-otel-javaagent.jar -Dsplunk.metrics.enabled=true -jar target/spring-petclinic-2.4.5.jar
+
+curl localhost:8080
+
+Hamburguer Menu > APM 
+
+Main Screen, metrics
+APM Map
+
+Traces
+
+LogObserver
+
+(Add setting to fluentd)
+
+Sudo vim /etc/otel/collector/fluentd/conf.d/petclinic.conf
+
+(paste)
+<source>
+  @type tail
+  @label @SPLUNK
+  tag petclinic.app
+  path /tmp/spring-petclinic.log
+  pos_file /tmp/spring-petclinic.pos_file
+  read_from_head false
+ <parse>
+   @type none
+ </parse>
+</source>
+
+(restart fluentd)
+sudo systemctl restart td-agent
+
+(Add LogBack Settings to the folder)
+vim /home/ubuntu/spring-petclinic/src/main/resources/logback.xml
+
+(paste XML)
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<configuration scan="true" scanPeriod="30 seconds">
+  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+     <resetJUL>true</resetJUL>
+  </contextListener>
+  <!-- <logger name="org.hibernate" level="debug"/> -->
+  <logger name="org.springframework.samples.petclinic" level="debug"/>
+  <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>/tmp/spring-petclinic.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>springLogFile.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>5</maxHistory>
+      <totalSizeCap>1GB</totalSizeCap>
+    </rollingPolicy>
+    <encoder>
+            <pattern>
+                    %d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg trace_id=%X{trace_id} span_id=%X{span_id} trace_flags=%X{trace_flags} service.name=%property{otel.resource.service.name}, deployment.environment=%property{otel.resource.deployment.environment} %n
+    </pattern>
+</encoder>
+  </appender>
+  <root level="debug">
+    <appender-ref ref="file" />
+  </root>
+</configuration>
+
+(repackage app)
+
+./mvnw package -Dmaven.test.skip=true
+
+(run again)
+java  -javaagent:./splunk-otel-javaagent.jar -Dsplunk.metrics.enabled=true -jar target/spring-petclinic-2.4.5.jar
+
+curl localhost:8080
+
+Hamburguer Menu > Log Observer > Filter hostname
+
+RUM
+
+Hamburguer Menu > Data Setup > RUM Instrumentation
+
+Next
+
+vim /home/ubuntu/spring-petclinic/src/main/resources/templates/fragments/layout.html
+
+<script src="https://cdn.signalfx.com/o11y-gdi-rum/latest/splunk-otel-web.js" crossorigin="anonymous"></script>
+<script>
+    SplunkRum.init({
+        beaconUrl: "https://rum-ingest.us1.signalfx.com/v1/rum",
+        rumAuth: "5iVBi1LYecSG9jfqTUs2vg",
+        app: "petclinic",
+        environment: "conf21"
+        });
+</script>
+
+curl localhost:8080
+
+Go to RUM
+
+Show pages/traces/correlation
+
+
+
+
+
 # Spring PetClinic Sample Application [![Build Status](https://travis-ci.org/spring-projects/spring-petclinic.png?branch=main)](https://travis-ci.org/spring-projects/spring-petclinic/)
 
 ## Understanding the Spring Petclinic application with a few diagrams
