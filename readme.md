@@ -1,3 +1,4 @@
+
 # Splunk Observability - Getting started
 
 This repo started as a fork of the classic Spring Pet Clinic repo and it was used during a presentation about Splunk Observability.
@@ -19,7 +20,7 @@ Lastly, we will configure the Spring PetClinic application to write application 
 
 Here's a diagram of the final state of this exercise:
 
-<< IMAGE >>
+![This is the final state of the exercise, with multiple Splunk Observability Components configured](https://github.com/asomensari-splunk/spring-petclinic/blob/main/src/main/resources/static/resources/images/exercise.png?raw=true)
 
 ## Pre-Requisites (Or Pre-Work)
 
@@ -27,13 +28,13 @@ Here's a diagram of the final state of this exercise:
 
 The exercise and instructions below were created using an Ubuntu VM (18.04), but any compatible Ubuntu (debian) distro should work.
 
-If you are planning to run this exercise locally, in a lab format, we recommend Multipass (XXXXXXXX) or VirtualBox (XXXXXXX). While we do not cover VM creation here, there are plenty of resources available with detailed instructions on a number of websites. A VM with 2GB, 1vCPU and 15gb HD should be able to handle it. 
+If you are planning to run this exercise locally, in a lab format, we recommend Multipass ([https://multipass.run/](https://multipass.run/)) or VirtualBox ([https://www.virtualbox.org/](https://www.virtualbox.org/)). While we do not cover VM creation here, there are plenty of resources available with detailed instructions on a number of websites. A VM with 2GB, 1vCPU and 15gb HD should be able to handle it. 
 
 The VM needs to have access to the the internet for both downloading installers as well as sending the telemetry to the Splunk endpoints
 
 ### 2. Splunk Observability Cloud Account
 
-Another Pre-requisitite is access to the Splunk Observability Cloud. You should check with your team members and account admins in order to get credentials. In case you don't have an account and want to run a trial, you can create your account here: XXXXXXXXXXXXXXXX
+Another Pre-requisitite is access to the Splunk Observability Cloud. You should check with your team members and account admins in order to get credentials. In case you don't have an account and want to run a trial, you can create your account here: [https://www.splunk.com/en_us/observability/o11y-cloud-free-trial.html](https://www.splunk.com/en_us/observability/o11y-cloud-free-trial.html)
 
 ### 3. Basic Console (Shell) knowledge
 Lastly, this exercise requires basic knowledge and familiarity with using a shell console, running commands and editing configuration files (we are use vi here, you can use whatever editor you prefer). If you never tried that out, we recommend reading a bit around linux shell and commands/editors.
@@ -65,20 +66,21 @@ We will now run a few commands to download required components:
 It might take a few minutes depending on your VM specs and network speed. The commands above will install components necessary for the exercise
 
 ### First Login to Splunk Observability Cloud
-Meanwhile, you can go ahead and login to your Splunk Observability Account (you can find the proper link in the confirmation email)
+Meanwhile, you can go ahead and login to your Splunk Observability Account.
 
  - https://app.signalfx.com (us0 realm) 
  - https://app.us1.signalfx.com (us1 realm) 
  - https://app.us2.signalfx.com (us2 realm)
  - https://app.eu0.signalfx.com (eu0 realm)
 
+![enter image description here](https://github.com/asomensari-splunk/spring-petclinic/blob/main/src/main/resources/static/resources/images/loginpage.png?raw=true)
+
 If you are not sure where your account is/was set, please contact your administrator and/or check your email for a login link.
 
-LOGIN PAGE
+After login, you should land in a page like this:
 
-You should land in a page like this:
+![enter image description here](https://github.com/asomensari-splunk/spring-petclinic/blob/main/src/main/resources/static/resources/images/o11y-landingpage.png?raw=true)
 
-(IMAGE)
 
 ## Exercise
 ### Splunk Infrastructure Monitoring (IM)
@@ -89,22 +91,24 @@ The OpenTelemetry Collector is a key component responsible for
 - Collecting and Reporting host and application logs
 
 Splunk Observability offers wizards to walk you through the setup of the agents and instrumentation. To get to the wizard, click in the top left corner icon (the hamburger menu), then click on Data Setup
-Hamburger Menu >> Data Setup
 
-Then click on Linux, Add Connection
-Linux >> Add Connection
+![enter image description here](https://github.com/asomensari-splunk/spring-petclinic/blob/main/src/main/resources/static/resources/images/o11y-landingpage-hamburguer.png?raw=true)
 
-You'll be taken to a short wizard where you will select some options. The default settings should work, no need to make changes. 
-The wizard will output a few commands that need to be executed in the shell. Here's an example: 
+
+![enter image description here](https://github.com/asomensari-splunk/spring-petclinic/blob/main/src/main/resources/static/resources/images/side-menu-data-setup.png?raw=true)
+
+You'll be taken to a short wizard where you will select some options. The default settings should work, no need to make changes. The wizard will output a few commands that need to be executed in the shell. 
+
+Here's an example: 
 
     curl -sSL https://dl.signalfx.com/splunk-otel-collector.sh > /tmp/splunk-otel-collector.sh && \
     sudo sh /tmp/splunk-otel-collector.sh --realm us1 -- <API TOKEN REDACTED> --mode agent
 
-(Please do not copy and paste this command during your exercise as it will not work. You should copy the command from your Splunk Observability Wizard page)
+*(Please do not copy and paste this command during your exercise as it will not work. You should copy the command from your Splunk Observability Wizard page. The command above has the API TOKEN REDACTED and we need the real API TOKEN associated with your account)*
 
 This command will download and setup the OpenTelemetry Collector. Once the install is completed, you can navigate to the Infrastructure page to see the data from your Host
 
-Hamburger Menu >> Infrastructure >> My Data Center >> Hosts
+![Hamburger Menu](https://github.com/asomensari-splunk/spring-petclinic/blob/main/src/main/resources/static/resources/images/hamburguer.png?raw=true) (Hamburguer Menyu) >> Infrastructure >> My Data Center >> Hosts
 
 Add Filter >> host.name >> (type or select your hostname)
 
@@ -113,6 +117,7 @@ Once you see data flowing for your host, we are then ready to get started with t
 --------------------------------------------------
 ### Splunk Application Performance Monitoring (APM)
 
+#### Download and Build the Spring PetClinic App
 First thing we need to setup APM is... well, an application. For this exercise, we will use the Spring Pet Clinic application. This is a very popular sample java application built with Spring framework (Springboot).
 
 We will now clone the application repository, then we will compile, build, package and test the application.
@@ -141,9 +146,15 @@ You can validate if the application is running by visiting
 
 (feel free to navigate and click around )
 
-Now that the application is running, it is time to setup the APM instrumentation. Let's go back to the Splunk Observability Cloud UI
+#### Instrument the Application With Splunk OpenTelemetry Java Libraries
+Now that the application is running, it is time to setup the APM instrumentation. The Splunk APM product uses Open Telemetry libraries to instrument the applications ([https://github.com/signalfx/splunk-otel-java](https://github.com/signalfx/splunk-otel-java)). 
+The Otel-Java library will instrument code to generate metrics and spans/traces that are reported to the OpenTelemetry Collector. 
 
-Hamburguer Menu >> Data Setup
+Let's continue the process by visiting the Splunk Observability Cloud UI again. 
+
+![Hamburguer Menu](https://github.com/asomensari-splunk/spring-petclinic/blob/main/src/main/resources/static/resources/images/hamburguer.png?raw=true) (Hamburguer Menu) >> Data Setup
+
+Then
 
 APM Instrumentation >> Java >> Add Connection
 
@@ -153,17 +164,17 @@ The APM Instrumentation Wizard will show a few options for you to select, things
 
 At the end of the wizard, you'll be given a set of commands to run (similar to the Splunk IM instructions)
 
-(make sure you are in the spring-petclinic directory)
+*(make sure you are in the spring-petclinic directory)*
 
     curl -L https://github.com/signalfx/splunk-otel-java/releases/latest/download/splunk-otel-javaagent-all.jar -o splunk-otel-javaagent.jar
 
-(this command downloads the Splunk Open Telemetry Java Instrumentation library)
+*(this command downloads the Splunk Open Telemetry Java Instrumentation library)*
 
     export OTEL_SERVICE_NAME='petclinic'
     export OTEL_RESOURCE_ATTRIBUTES='deployment.environment=conf21,version=0.314'
     export OTEL_EXPORTER_OTLP_ENDPOINT='http://localhost:4317'
 
-(these commands define settings required by the instrumentation library)
+*(these commands define settings required by the instrumentation library)*
 
 Lastly, we will run our application adding the -javaagent tag in front of the command
 
@@ -173,7 +184,7 @@ Let's go visit our application again to generate some traffic.
 
     http://<VM_IP_ADDRESS>:8080 
 
-(click around, generate errors, add visits, etc )
+*(click around, generate errors, add visits, etc )*
 
 Then you can visit the APM UI and examine the application components, traces, etc
 
@@ -182,7 +193,7 @@ Hamburguer Menu >> APM >> Explore
 --------------------------------------------------
 ### Splunk Real User Monitoring (RUM)
 
-For the Real User instrumentation, we will add the Open Telemetry Javascript Agent in the pages. We will use the wizard again.
+For the Real User instrumentation, we will add the Open Telemetry Javascript ([https://github.com/signalfx/splunk-otel-js-web](https://github.com/signalfx/splunk-otel-js-web)) snippet in the pages. We will use the wizard again.
 
 Data Setup >> RUM Instrumentation >> Browser Instrumentation >> Add Connection
 
