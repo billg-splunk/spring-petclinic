@@ -175,12 +175,9 @@ Let's go visit our application again to generate some traffic.
 
 (click around, generate errors, add visits, etc )
 
-Hamburguer Menu > APM
+Then you can visit the APM UI and examine the application components, traces, etc
 
-Main Screen, metrics
-APM Map
-
-Traces
+Hamburguer Menu >> APM >> Explore
 
 --------------------------------------------------
 ### Splunk Real User Monitoring (RUM)
