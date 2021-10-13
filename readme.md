@@ -1,135 +1,335 @@
-# Spring PetClinic Sample Application [![Build Status](https://travis-ci.org/spring-projects/spring-petclinic.png?branch=main)](https://travis-ci.org/spring-projects/spring-petclinic/)
+# Splunk Observability - Getting started
 
-## Understanding the Spring Petclinic application with a few diagrams
-<a href="https://speakerdeck.com/michaelisvy/spring-petclinic-sample-application">See the presentation here</a>
+This repo started as a fork of the classic Spring Pet Clinic repo and it was used during a presentation about Splunk Observability.
 
-## Running petclinic locally
-Petclinic is a [Spring Boot](https://spring.io/guides/gs/spring-boot) application built using [Maven](https://spring.io/guides/gs/maven/). You can build a jar file and run it from the command line:
+The goal is to walk through the basic steps to configure the following components of the Splunk Observability platform:
 
+1. Splunk Infrastructure Monitoring (IM)
+2. Splunk Application Performance Monitoring (APM)
+3. Splunk Real User Monitoring (RUM)
+4. Splunk LogsObserver (LO)
 
-```
-git clone https://github.com/spring-projects/spring-petclinic.git
-cd spring-petclinic
-./mvnw package
-java -jar target/*.jar
-```
+We will also show the steps about how to clone (download) a sample java application (Spring PetClinic), as well as how to compile, package and run the application. 
 
-You can then access petclinic here: http://localhost:8080/
+Once the application is up and running, we will instrument the application using OpenTelemetry Java Instrumentation libraries that will generate traces and metrics used by the Splunk APM product.
 
-<img width="1042" alt="petclinic-screenshot" src="https://cloud.githubusercontent.com/assets/838318/19727082/2aee6d6c-9b8e-11e6-81fe-e889a5ddfded.png">
+After that, we will instrument the PetClinic's end user interface (html pages rendered by the application) with the Splunk Open Telemetry Javascript Libraries that will generate traces about all the individual clicks and page loads executed by the end user.
 
-Or you can run it from Maven directly using the Spring Boot Maven plugin. If you do this it will pick up changes that you make in the project immediately (changes to Java source files require a compile as well - most people use an IDE for this):
+Lastly, we will configure the Spring PetClinic application to write application logs to the filesystem and also configure the Splunk Open Telemetry Collector to read (tail) the logs and report to the Splunk Observability Platform.
 
-```
-./mvnw spring-boot:run
-```
+Here's a diagram of the final state of this exercise:
 
-> NOTE: Windows users should set `git config core.autocrlf true` to avoid format assertions failing the build (use `--global` to set that flag globally).
+<< IMAGE >>
 
-## In case you find a bug/suggested improvement for Spring Petclinic
-Our issue tracker is available here: https://github.com/spring-projects/spring-petclinic/issues
+## Pre-Requisites (Or Pre-Work)
 
+### 1. Environment (VM)
 
-## Database configuration
+The exercise and instructions below were created using an Ubuntu VM (18.04), but any compatible Ubuntu (debian) distro should work.
 
-In its default configuration, Petclinic uses an in-memory database (H2) which
-gets populated at startup with data. The h2 console is automatically exposed at `http://localhost:8080/h2-console`
-and it is possible to inspect the content of the database using the `jdbc:h2:mem:testdb` url.
- 
-A similar setup is provided for MySql in case a persistent database configuration is needed. Note that whenever the database type is changed, the app needs to be run with a different profile: `spring.profiles.active=mysql` for MySql.
+If you are planning to run this exercise locally, in a lab format, we recommend Multipass (XXXXXXXX) or VirtualBox (XXXXXXX). While we do not cover VM creation here, there are plenty of resources available with detailed instructions on a number of websites. A VM with 2GB, 1vCPU and 15gb HD should be able to handle it. 
 
-You could start MySql locally with whatever installer works for your OS, or with docker:
+The VM needs to have access to the the internet for both downloading installers as well as sending the telemetry to the Splunk endpoints
 
-```
-docker run -e MYSQL_USER=petclinic -e MYSQL_PASSWORD=petclinic -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=petclinic -p 3306:3306 mysql:5.7.8
-```
+### 2. Splunk Observability Cloud Account
 
-Further documentation is provided [here](https://github.com/spring-projects/spring-petclinic/blob/main/src/main/resources/db/mysql/petclinic_db_setup_mysql.txt).
+Another Pre-requisitite is access to the Splunk Observability Cloud. You should check with your team members and account admins in order to get credentials. In case you don't have an account and want to run a trial, you can create your account here: XXXXXXXXXXXXXXXX
 
-## Working with Petclinic in your IDE
-
-### Prerequisites
-The following items should be installed in your system:
-* Java 8 or newer (full JDK not a JRE).
-* git command line tool (https://help.github.com/articles/set-up-git)
-* Your preferred IDE 
-  * Eclipse with the m2e plugin. Note: when m2e is available, there is an m2 icon in `Help -> About` dialog. If m2e is
-  not there, just follow the install process here: https://www.eclipse.org/m2e/
-  * [Spring Tools Suite](https://spring.io/tools) (STS)
-  * IntelliJ IDEA
-  * [VS Code](https://code.visualstudio.com)
-
-### Steps:
-
-1) On the command line
-    ```
-    git clone https://github.com/spring-projects/spring-petclinic.git
-    ```
-2) Inside Eclipse or STS
-    ```
-    File -> Import -> Maven -> Existing Maven project
-    ```
-
-    Then either build on the command line `./mvnw generate-resources` or using the Eclipse launcher (right click on project and `Run As -> Maven install`) to generate the css. Run the application main method by right clicking on it and choosing `Run As -> Java Application`.
-
-3) Inside IntelliJ IDEA
-    In the main menu, choose `File -> Open` and select the Petclinic [pom.xml](pom.xml). Click on the `Open` button.
-
-    CSS files are generated from the Maven build. You can either build them on the command line `./mvnw generate-resources` or right click on the `spring-petclinic` project then `Maven -> Generates sources and Update Folders`.
-
-    A run configuration named `PetClinicApplication` should have been created for you if you're using a recent Ultimate version. Otherwise, run the application by right clicking on the `PetClinicApplication` main class and choosing `Run 'PetClinicApplication'`.
-
-4) Navigate to Petclinic
-
-    Visit [http://localhost:8080](http://localhost:8080) in your browser.
+### 3. Basic Console (Shell) knowledge
+Lastly, this exercise requires basic knowledge and familiarity with using a shell console, running commands and editing configuration files (we are use vi here, you can use whatever editor you prefer). If you never tried that out, we recommend reading a bit around linux shell and commands/editors.
 
 
-## Looking for something in particular?
+## Getting Started
 
-|Spring Boot Configuration | Class or Java property files  |
-|--------------------------|---|
-|The Main Class | [PetClinicApplication](https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/PetClinicApplication.java) |
-|Properties Files | [application.properties](https://github.com/spring-projects/spring-petclinic/blob/main/src/main/resources) |
-|Caching | [CacheConfiguration](https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/system/CacheConfiguration.java) |
+### VM Login
+First step is to log in to your VM. In the steps here, we will use the commands for multipass.
 
-## Interesting Spring Petclinic branches and forks
+    multipass start my-o11y-vm
+    multipass shell my-o11y-vm
 
-The Spring Petclinic "main" branch in the [spring-projects](https://github.com/spring-projects/spring-petclinic)
-GitHub org is the "canonical" implementation, currently based on Spring Boot and Thymeleaf. There are
-[quite a few forks](https://spring-petclinic.github.io/docs/forks.html) in a special GitHub org
-[spring-petclinic](https://github.com/spring-petclinic). If you have a special interest in a different technology stack
-that could be used to implement the Pet Clinic then please join the community there.
+Or you can ssh to the VM using your terminal app 
+
+    ssh ubuntu@VM-IP
+
+Or ff using VirtualBox with Desktop environment, just start the VM and open the Terminal app
 
 
-## Interaction with other open source projects
+### VM Prepare
 
-One of the best parts about working on the Spring Petclinic application is that we have the opportunity to work in direct contact with many Open Source projects. We found some bugs/suggested improvements on various topics such as Spring, Spring Data, Bean Validation and even Eclipse! In many cases, they've been fixed/implemented in just a few days.
-Here is a list of them:
+We will now run a few commands to download required components:
 
-| Name | Issue |
-|------|-------|
-| Spring JDBC: simplify usage of NamedParameterJdbcTemplate | [SPR-10256](https://jira.springsource.org/browse/SPR-10256) and [SPR-10257](https://jira.springsource.org/browse/SPR-10257) |
-| Bean Validation / Hibernate Validator: simplify Maven dependencies and backward compatibility |[HV-790](https://hibernate.atlassian.net/browse/HV-790) and [HV-792](https://hibernate.atlassian.net/browse/HV-792) |
-| Spring Data: provide more flexibility when working with JPQL queries | [DATAJPA-292](https://jira.springsource.org/browse/DATAJPA-292) |
+    sudo apt update
+    sudo apt install curl git maven openjdk-11-jdk
 
 
-# Contributing
+It might take a few minutes depending on your VM specs and network speed. The commands above will install components necessary for the exercise
 
-The [issue tracker](https://github.com/spring-projects/spring-petclinic/issues) is the preferred channel for bug reports, features requests and submitting pull requests.
+### First Login to Splunk Observability Cloud
+Meanwhile, you can go ahead and login to your Splunk Observability Account (you can find the proper link in the confirmation email)
 
-For pull requests, editor preferences are available in the [editor config](.editorconfig) for easy use in common text editors. Read more and download plugins at <https://editorconfig.org>. If you have not previously done so, please fill out and submit the [Contributor License Agreement](https://cla.pivotal.io/sign/spring).
+ - https://app.signalfx.com (us0 realm) 
+ - https://app.us1.signalfx.com (us1 realm) 
+ - https://app.us2.signalfx.com (us2 realm)
+ - https://app.eu0.signalfx.com (eu0 realm)
 
-# License
+If you are not sure where your account is/was set, please contact your administrator and/or check your email for a login link.
 
-The Spring PetClinic sample application is released under version 2.0 of the [Apache License](https://www.apache.org/licenses/LICENSE-2.0).
+LOGIN PAGE
 
-[spring-petclinic]: https://github.com/spring-projects/spring-petclinic
-[spring-framework-petclinic]: https://github.com/spring-petclinic/spring-framework-petclinic
-[spring-petclinic-angularjs]: https://github.com/spring-petclinic/spring-petclinic-angularjs 
-[javaconfig branch]: https://github.com/spring-petclinic/spring-framework-petclinic/tree/javaconfig
-[spring-petclinic-angular]: https://github.com/spring-petclinic/spring-petclinic-angular
-[spring-petclinic-microservices]: https://github.com/spring-petclinic/spring-petclinic-microservices
-[spring-petclinic-reactjs]: https://github.com/spring-petclinic/spring-petclinic-reactjs
-[spring-petclinic-graphql]: https://github.com/spring-petclinic/spring-petclinic-graphql
-[spring-petclinic-kotlin]: https://github.com/spring-petclinic/spring-petclinic-kotlin
-[spring-petclinic-rest]: https://github.com/spring-petclinic/spring-petclinic-rest
+You should land in a page like this:
+
+(IMAGE)
+
+## Exercise
+### Splunk Infrastructure Monitoring (IM)
+Let's get started with step #1: **Install the OpenTelemetry Collector**. 
+The OpenTelemetry Collector is a key component responsible for
+- Collecting and Reporting IM metrics (disk, cpu, memory, etc)
+- Receiving and Reporting APM Traces
+- Collecting and Reporting host and application logs
+
+Splunk Observability offers wizards to walk you through the setup of the agents and instrumentation. To get to the wizard, click in the top left corner icon (the hamburger menu), then click on Data Setup
+Hamburger Menu >> Data Setup
+
+Then click on Linux, Add Connection
+Linux >> Add Connection
+
+You'll be taken to a short wizard where you will select some options. The default settings should work, no need to make changes. 
+The wizard will output a few commands that need to be executed in the shell. Here's an example: 
+
+    curl -sSL https://dl.signalfx.com/splunk-otel-collector.sh > /tmp/splunk-otel-collector.sh && \
+    sudo sh /tmp/splunk-otel-collector.sh --realm us1 -- <API TOKEN REDACTED> --mode agent
+
+(Please do not copy and paste this command during your exercise as it will not work. You should copy the command from your Splunk Observability Wizard page)
+
+This command will download and setup the OpenTelemetry Collector. Once the install is completed, you can navigate to the Infrastructure page to see the data from your Host
+
+Hamburger Menu >> Infrastructure >> My Data Center >> Hosts
+
+Add Filter >> host.name >> (type or select your hostname)
+
+Once you see data flowing for your host, we are then ready to get started with the APM component
+
+--------------------------------------------------
+### Splunk Application Performance Monitoring (APM)
+
+First thing we need to setup APM is... well, an application. For this exercise, we will use the Spring Pet Clinic application. This is a very popular sample java application built with Spring framework (Springboot).
+
+We will now clone the application repository, then we will compile, build, package and test the application.
+
+    git clone https://github.com/spring-projects/spring-petclinic
+
+(eventually -> https://github.com/asomensari-splunk/spring-petclinic)
+
+then we open the directory
+
+    cd spring-petclinic
+
+and run the maven command to compile/build/package
+
+    ./mvnw package -Dmaven.test.skip=true
+
+(this might take a few minutes the first time you run, maven will download a lot of dependencies before it actually compiles the app. Future executions will be a lot shorter)
+
+Once the compilation is complete, you can run the application with the following command:
+
+    java -jar target/spring-petclinic-*.jar
+
+You can validate if the application is running by visiting 
+
+    http://<VM_IP_ADDRESS>:8080 
+
+(feel free to navigate and click around )
+
+Now that the application is running, it is time to setup the APM instrumentation. Let's go back to the Splunk Observability Cloud UI
+
+Hamburguer Menu >> Data Setup
+
+APM Instrumentation >> Java >> Add Connection
+
+The APM Instrumentation Wizard will show a few options for you to select, things like application name, environment, etc. In this scenario we are using:
+- Application Name: petclinic
+- Environment: conf21
+
+At the end of the wizard, you'll be given a set of commands to run (similar to the Splunk IM instructions)
+
+(make sure you are in the spring-petclinic directory)
+
+    curl -L https://github.com/signalfx/splunk-otel-java/releases/latest/download/splunk-otel-javaagent-all.jar -o splunk-otel-javaagent.jar
+
+(this command downloads the Splunk Open Telemetry Java Instrumentation library)
+
+    export OTEL_SERVICE_NAME='petclinic'
+    export OTEL_RESOURCE_ATTRIBUTES='deployment.environment=conf21,version=0.314'
+    export OTEL_EXPORTER_OTLP_ENDPOINT='http://localhost:4317'
+
+(these commands define settings required by the instrumentation library)
+
+Lastly, we will run our application adding the -javaagent tag in front of the command
+
+    java  -javaagent:./splunk-otel-javaagent.jar -jar target/spring-petclinic-*-SNAPSHOT.jar
+
+Let's go visit our application again to generate some traffic. 
+
+    http://<VM_IP_ADDRESS>:8080 
+
+(click around, generate errors, add visits, etc )
+
+Hamburguer Menu > APM
+
+Main Screen, metrics
+APM Map
+
+Traces
+
+--------------------------------------------------
+### Splunk Real User Monitoring (RUM)
+
+For the Real User instrumentation, we will add the Open Telemetry Javascript Agent in the pages. We will use the wizard again.
+
+Data Setup >> RUM Instrumentation >> Browser Instrumentation >> Add Connection
+
+Then you'll need to select the RUM token and define the application and environment names. The wizard will then show a snipped of HTML code that needs to be place at the top at the pages (preferably in the < HEAD > section). In this example we are using:
+- Application Name: petclinic
+- Environment: conf21
+
+``
+
+    <script src="https://cdn.signalfx.com/o11y-gdi-rum/latest/splunk-otel-web.js" crossorigin="anonymous"></script>
+    <script>
+    SplunkRum.init({
+        beaconUrl: "https://rum-ingest.us1.signalfx.com/v1/rum",
+        rumAuth: "XXXXXXXXXXXXXXXXXXXX",
+        app: "petclinic",
+        environment: "conf21"
+        }); </script>
+
+The Spring PetClinic application uses a single html page as the "layout" page that is reused across all pages of the application. This is the perfect location to insert the Splunk RUM Instrumentation Library as it will be loaded in all pages automatically.
+
+Let's then edit the layout page:
+
+    vim src/main/resources/templates/fragments/layout.html
+
+and let's insert the snipped we generated above in the < HEAD > section of the page.
+
+Now we need to rebuild the application and run it again:
+
+    ./mvnw package -Dmaven.test.skip=true
+    java  -javaagent:./splunk-otel-javaagent.jar -jar target/spring-petclinic-*-SNAPSHOT.jar
+
+Then let's visit the application again to generate more traffic, not we should see RUM traces being reported.
+
+    http://<VM_IP_ADDRESS>:8080 
+
+(feel free to navigate and click around )
+
+Let's visit RUM and see some of the traces and metrics.
+
+Hamburger Menu >> RUM
+
+You should see some of the Spring PetClinic urls showing up in the UI
+
+--------------------------------------------------
+### Splunk Log Observer (LO)
+For the Splunk Log Observer component, we will configure the Spring PetClinic application to write logs to a file in the filesystem. After that, we will configure the Splunk OpenTelemetry Collect to read (tail) that log file and report the information to the Splunk Observability Platform.
+
+#### Spring Pet Clinic Logback Setting
+The Spring PetClinic application can be configure to use a number of different java logging libraries. In this scenario, we are using logback. Here's a sample logback configuration file:
+
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE xml>
+    <configuration scan="true" scanPeriod="30 seconds">
+      <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+         <resetJUL>true</resetJUL>
+      </contextListener>
+      <!-- <logger name="org.hibernate" level="debug"/> -->
+      <logger name="org.springframework.samples.petclinic" level="debug"/>
+      <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>/tmp/spring-petclinic.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+          <fileNamePattern>springLogFile.%d{yyyy-MM-dd}.log</fileNamePattern>
+          <maxHistory>5</maxHistory>
+          <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+          <pattern>
+          %d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg trace_id=%X{trace_id} span_id=%X{span_id} trace_flags=%X{trace_flags} service.name=%property{otel.resource.service.name}, deployment.environment=%property{otel.resource.deployment.environment} %n
+          </pattern>
+        </encoder>
+      </appender>
+      <root level="debug">
+        <appender-ref ref="file" />
+      </root>
+    </configuration>
+
+We just need to create a file named logback.xml in the configuration folder. 
+
+    vim /src/main/resources/logback.xml
+
+and paste the XML content from the snippet above.
+
+#### Splunk Open Telemetry Collector (FluentD)  Configuration
+(Add setting to fluentd)
+
+Sudo vim /etc/otel/collector/fluentd/conf.d/petclinic.conf
+
+(paste)
+<source>
+  @type tail
+  @label @SPLUNK
+  tag petclinic.app
+  path /tmp/spring-petclinic.log
+  pos_file /tmp/spring-petclinic.pos_file
+  read_from_head false
+ <parse>
+   @type none
+ </parse>
+</source>
+
+(restart fluentd)
+sudo systemctl restart td-agent
+
+(Add LogBack Settings to the folder)
+vim /home/ubuntu/spring-petclinic/src/main/resources/logback.xml
+
+(paste XML)
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<configuration scan="true" scanPeriod="30 seconds">
+  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+     <resetJUL>true</resetJUL>
+  </contextListener>
+  <!-- <logger name="org.hibernate" level="debug"/> -->
+  <logger name="org.springframework.samples.petclinic" level="debug"/>
+  <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>/tmp/spring-petclinic.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>springLogFile.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>5</maxHistory>
+      <totalSizeCap>1GB</totalSizeCap>
+    </rollingPolicy>
+    <encoder>
+            <pattern>
+                    %d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg trace_id=%X{trace_id} span_id=%X{span_id} trace_flags=%X{trace_flags} service.name=%property{otel.resource.service.name}, deployment.environment=%property{otel.resource.deployment.environment} %n
+    </pattern>
+</encoder>
+  </appender>
+  <root level="debug">
+    <appender-ref ref="file" />
+  </root>
+</configuration>
+
+(repackage app)
+
+./mvnw package -Dmaven.test.skip=true
+
+(run again)
+java  -javaagent:./splunk-otel-javaagent.jar -Dsplunk.metrics.enabled=true -jar target/spring-petclinic-2.4.5.jar
+
+curl localhost:8080
+
+Hamburguer Menu > Log Observer > Filter hostname
+
+
+
