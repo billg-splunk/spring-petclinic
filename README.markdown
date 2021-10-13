@@ -1,147 +1,332 @@
-# Introduction
+# Splunk Observability - Getting started
 
-Spring's project pages are based on [Jekyll](https://jekyllrb.com) and [GitHub Pages](https://pages.github.com/). This means that each project's website is stored within the project repo, in a special branch called "gh-pages". In order to keep everything looking similar across the many individual Spring projects, common elements of the Jekyll site layout, css, etc are stored in [a shared gh-pages repository](https://github.com/spring-projects/gh-pages). If you're seeing this README in the gh-pages branch of an actual Spring project, that's because this file, along with all the other common files get merged periodically into each project.
+This repo started as a fork of the classic Spring Pet Clinic repo and it was used during a presentation about Splunk Observability.
 
-This approach may sound a little funky (and it is), but it's way better than the misery of Git submodules. In fact, it's actually pretty easy. If you're just getting started, then follow the directions immediately below. If you're needing a refresher on how to keep things up to date, then head to the section at the bottom on "keeping up to date".
+The goal is to walk through the basic steps to configure the following components of the Splunk Observability platform:
 
-> ***Note:*** Github changed their rendering (a lot) in April 2016. If you are seeing pages build failures since that time, then you probably need to merge some changes from this upstream. Follow the instructions below, and for testing locally use rubiy 2.x and don't forget to `bundle exec ...` everything.
+1. Splunk Infrastructure Monitoring (IM)
+2. Splunk Application Performance Monitoring (APM)
+3. Splunk Real User Monitoring (RUM)
+4. Splunk LogsObserver (LO)
 
+We will also show the steps about how to clone (download) a sample java application (Spring PetClinic), as well as how to compile, package and run the application. 
 
+Once the application is up and running, we will instrument the application using OpenTelemetry Java Instrumentation libraries that will generate traces and metrics used by the Splunk APM product.
 
-# How to start a new `gh-pages` project page
+After that, we will instrument the PetClinic's end user interface (html pages rendered by the application) with the Splunk Open Telemetry Javascript Libraries that will generate traces about all the individual clicks and page loads executed by the end user.
 
-From within your Spring project's git checkout directory:
+Lastly, we will configure the Spring PetClinic application to write application logs to the filesystem and also configure the Splunk Open Telemetry Collector to read (tail) the logs and report to the Splunk Observability Platform.
 
-### Create and checkout the gh-pages branch
+Here's a diagram of the final state of this exercise:
 
-    git checkout --orphan gh-pages
+<< IMAGE >>
 
-### Remove all files
+## Pre-Requisites (Or Pre-Work)
 
-    git rm -rf `git ls-files` && rm -rf *
+### 1. Environment (VM)
 
-### Add the gh-pages-upstream remote
+The exercise and instructions below were created using an Ubuntu VM (18.04), but any compatible Ubuntu (debian) distro should work.
 
-    git remote add gh-pages-upstream https://github.com/spring-projects/gh-pages.git
+If you are planning to run this exercise locally, in a lab format, we recommend Multipass (XXXXXXXX) or VirtualBox (XXXXXXX). While we do not cover VM creation here, there are plenty of resources available with detailed instructions on a number of websites. A VM with 2GB, 1vCPU and 15gb HD should be able to handle it. 
 
-### Pull in the common site infrastructure
+The VM needs to have access to the the internet for both downloading installers as well as sending the telemetry to the Splunk endpoints
 
-    git pull gh-pages-upstream gh-pages
+### 2. Splunk Observability Cloud Account
 
+Another Pre-requisitite is access to the Splunk Observability Cloud. You should check with your team members and account admins in order to get credentials. In case you don't have an account and want to run a trial, you can create your account here: XXXXXXXXXXXXXXXX
 
-## Edit `_config.yml`
+### 3. Basic Console (Shell) knowledge
+Lastly, this exercise requires basic knowledge and familiarity with using a shell console, running commands and editing configuration files (we are use vi here, you can use whatever editor you prefer). If you never tried that out, we recommend reading a bit around linux shell and commands/editors.
 
-You'll need to tweak a few settings in `_config.yml`, sitting in the root directory. Edit this file and follow the instructions within. It should be self explanatory; you'll see that there are lots of instances of "spring-framework" as a project name. You should replace these with your own project's information as appropriate.
 
+## Getting Started
 
-## Create the project home page
+### VM Login
+First step is to log in to your VM. In the steps here, we will use the commands for multipass.
 
-### What kind of project are you?
+    multipass start my-o11y-vm
+    multipass shell my-o11y-vm
 
-At this point, you just need to give your project a home page. There are pre-fab samples included in the `_sample-pages` directory:
+Or you can ssh to the VM using your terminal app 
 
-    $ ls -1 _sample-pages
-    documentation.md
-    project_group.html
-    project.html
-    vaniall.md
+    ssh ubuntu@VM-IP
 
-At this point you need to make a decision: is your project a "grouping project", like Spring Data, acting as a parent for one or more child projects? If so, you should choose `project_group.html` in the following step. Otherwise, if you're dealing with an individual, concrete Spring project, e.g. Spring Data JPA, or Spring Security OAuth, you should choose `project.html`. The `documentation.md` can be used when you want to expose README.md files on your site.
+Or ff using VirtualBox with Desktop environment, just start the VM and open the Terminal app
 
-### Copy the sample page to `index.html`
 
-Based on your choice above, copy the correct sample page to `index.html`, e.g.:
+### VM Prepare
 
-    $ cp _sample-pages/project.html index.html
+We will now run a few commands to download required components:
 
-or
+    sudo apt update
+    sudo apt install curl git maven openjdk-11-jdk
 
-    $ cp _sample-pages/project_group.html index.html
 
+It might take a few minutes depending on your VM specs and network speed. The commands above will install components necessary for the exercise
 
-## Edit the content of your home page
+### First Login to Splunk Observability Cloud
+Meanwhile, you can go ahead and login to your Splunk Observability Account (you can find the proper link in the confirmation email)
 
-### Edit the YAML front matter
+ - https://app.signalfx.com (us0 realm) 
+ - https://app.us1.signalfx.com (us1 realm) 
+ - https://app.us2.signalfx.com (us2 realm)
+ - https://app.eu0.signalfx.com (eu0 realm)
 
-Open up `index.html` in your favorite text editor. Within, you'll find "YAML front matter" at the top of the file, i.e. everything between the triple dashes that look like `---`. This section contains some basic metadata, and—if you've copied the `project.html` sample—also contains a custom section of information for your project "badges". These are icons that will render in the sidebar of your project page.
+If you are not sure where your account is/was set, please contact your administrator and/or check your email for a login link.
 
-Edit the URLs and other values in the YAML front matter as appropriate. This should be self-explanatory.
+LOGIN PAGE
 
-> **Tip**: If a particular "badge" (e.g. Sonar) does not apply to your project, just delete that entry from the YAML.
+You should land in a page like this:
 
-### Understand the use of "captures" and "includes"
+(IMAGE)
 
-Next, you'll see a series of `{% capture variable_name %}` blocks that look like this:
+## Exercise
+### Splunk Infrastructure Monitoring (IM)
+Let's get started with step #1: **Install the OpenTelemetry Collector**. 
+The OpenTelemetry Collector is a key component responsible for
+- Collecting and Reporting IM metrics (disk, cpu, memory, etc)
+- Receiving and Reporting APM Traces
+- Collecting and Reporting host and application logs
 
-    {% capture billboard_description %}
-    ...
-    {% endcapture %}
+Splunk Observability offers wizards to walk you through the setup of the agents and instrumentation. To get to the wizard, click in the top left corner icon (the hamburger menu), then click on Data Setup
+Hamburger Menu >> Data Setup
 
-At the end of the file you'll see a `{% include %}` directive that looks like this:
+Then click on Linux, Add Connection
+Linux >> Add Connection
 
-    {% include project_page.html %}
+You'll be taken to a short wizard where you will select some options. The default settings should work, no need to make changes. 
+The wizard will output a few commands that need to be executed in the shell. Here's an example: 
 
-That `include` directive is the most important part. It brings in `project_page.html`, which will actually be responsible for rendering the page content.
+    curl -sSL https://dl.signalfx.com/splunk-otel-collector.sh > /tmp/splunk-otel-collector.sh && \
+    sudo sh /tmp/splunk-otel-collector.sh --realm us1 -- <API TOKEN REDACTED> --mode agent
 
-The net effect is that you have one simple place to edit actual page content, and the actual rendering and placement of that content is handled for you by the include.
+(Please do not copy and paste this command during your exercise as it will not work. You should copy the command from your Splunk Observability Wizard page)
 
-Ideally, you shouldn't have to touch any other files besides `_config.yml` and `index.html`, but of course if you need to you always can.
+This command will download and setup the OpenTelemetry Collector. Once the install is completed, you can navigate to the Infrastructure page to see the data from your Host
 
-### Replace the filler text with copy specific to your project
+Hamburger Menu >> Infrastructure >> My Data Center >> Hosts
 
-Of course the next step is simply to change the prose within each `{% capture %}` block to read as you want it to. It's just Markdown, so do as you please with that in mind. Note that you'll want to move on to the next step to view the site locally before you get too far into the editing process; this will allow you view your changes live as you make them.
+Add Filter >> host.name >> (type or select your hostname)
 
+Once you see data flowing for your host, we are then ready to get started with the APM component
 
-## View the site locally
+--------------------------------------------------
+### Splunk Application Performance Monitoring (APM)
 
-Assuming you're already within your project's clone directory, and you've already checked out the `gh-pages` branch, follow these simple directions to view your site locally:
+First thing we need to setup APM is... well, an application. For this exercise, we will use the Spring Pet Clinic application. This is a very popular sample java application built with Spring framework (Springboot).
 
-### Install jekyll if you have not already
+We will now clone the application repository, then we will compile, build, package and test the application.
 
-> **Note:** Jekyll 3.0.4 is a known good version, and it is specifically referred to in `Gemfile.lock` so you have to use `bundle` (not `gem install ...`) to install it:
+    git clone https://github.com/spring-projects/spring-petclinic
 
-    gem install bundler
-    bundle
+(eventually -> https://github.com/asomensari-splunk/spring-petclinic)
 
-### Run jekyll
+then we open the directory
 
-Use the `--watch` flag to pick up changes to files as you make them, allowing you a nice edit-and-refresh workflow.
+    cd spring-petclinic
 
-    bundle exec jekyll serve --watch
+and run the maven command to compile/build/package
 
-> **Important:** Because the `baseurl` is set explicitly within your project's `_config.yml` file, you'll need to fully-qualify the URL to view your project. For example, if your project is named "spring-xyz", your URL when running Jekyll locally will be <http://localhost:4000/spring-xyz/>. Don't forget the trailing slash! You'll get a 404 without it.
+    ./mvnw package -Dmaven.test.skip=true
 
+(this might take a few minutes the first time you run, maven will download a lot of dependencies before it actually compiles the app. Future executions will be a lot shorter)
 
-## Commit your changes
+Once the compilation is complete, you can run the application with the following command:
 
-Once you're satisified with your edits, commit your changes and push the `gh-pages` pages up to your project's `origin` remote.
+    java -jar target/spring-petclinic-*.jar
 
-    git commit -m "Initialize project page"
-    git push --set-upstream origin gh-pages
-    git push
+You can validate if the application is running by visiting 
 
+    http://<VM_IP_ADDRESS>:8080 
 
-## View your site live on the web
+(feel free to navigate and click around )
 
-That's it! After not more than a few minutes, you should be able to see your site at https://spring-projects.github.io/{your-spring-project}
+Now that the application is running, it is time to setup the APM instrumentation. Let's go back to the Splunk Observability Cloud UI
 
+Hamburguer Menu >> Data Setup
 
-# How to keep common gh-pages content up to date
+APM Instrumentation >> Java >> Add Connection
 
-Once you've set up your project's gh-pages infrastructure above, you'll get notified whenever
-changes are made to the shared gh-pages project. Actually, _your project_ will get notified,
-because a webhook configured on the gh-pages project will fire that ultimately creates a new
-issue in your project's GH Issues.
-> Yeah, it would have been nice to do proper pull requests instead of issues, but this arrangement
-with gh-pages branches and upstreams isn't based on forking. That means pull requests are no can do.
-This also means that if your project doesn't have issues turned on, you won't get notified! So you
-might consider doing that if you haven't already.
+The APM Instrumentation Wizard will show a few options for you to select, things like application name, environment, etc. In this scenario we are using:
+- Application Name: petclinic
+- Environment: conf21
 
-In any case, whether or not you get notified via the issue coming in from the webhook, sync'ing
-up to the latest from the shared gh-pages project is easy enough:
+At the end of the wizard, you'll be given a set of commands to run (similar to the Splunk IM instructions)
 
-> This assumes you've got the `gh-pages-upstream` remote set up, per the instructions in sections
-above.
+(make sure you are in the spring-petclinic directory)
 
-    git checkout gh-pages
-    git pull --no-ff gh-pages-upstream gh-pages
+    curl -L https://github.com/signalfx/splunk-otel-java/releases/latest/download/splunk-otel-javaagent-all.jar -o splunk-otel-javaagent.jar
+
+(this command downloads the Splunk Open Telemetry Java Instrumentation library)
+
+    export OTEL_SERVICE_NAME='petclinic'
+    export OTEL_RESOURCE_ATTRIBUTES='deployment.environment=conf21,version=0.314'
+    export OTEL_EXPORTER_OTLP_ENDPOINT='http://localhost:4317'
+
+(these commands define settings required by the instrumentation library)
+
+Lastly, we will run our application adding the -javaagent tag in front of the command
+
+    java  -javaagent:./splunk-otel-javaagent.jar -jar target/spring-petclinic-*-SNAPSHOT.jar
+
+Let's go visit our application again to generate some traffic. 
+
+    http://<VM_IP_ADDRESS>:8080 
+
+(click around, generate errors, add visits, etc )
+
+Hamburguer Menu > APM
+
+Main Screen, metrics
+APM Map
+
+Traces
+
+--------------------------------------------------
+### Splunk Real User Monitoring (RUM)
+
+For the Real User instrumentation, we will add the Open Telemetry Javascript Agent in the pages. We will use the wizard again.
+
+Data Setup >> RUM Instrumentation >> Browser Instrumentation >> Add Connection
+
+Then you'll need to select the RUM token and define the application and environment names. The wizard will then show a snipped of HTML code that needs to be place at the top at the pages (preferably in the < HEAD > section). In this example we are using:
+- Application Name: petclinic
+- Environment: conf21
+
+``
+
+    <script src="https://cdn.signalfx.com/o11y-gdi-rum/latest/splunk-otel-web.js" crossorigin="anonymous"></script>
+    <script>
+    SplunkRum.init({
+        beaconUrl: "https://rum-ingest.us1.signalfx.com/v1/rum",
+        rumAuth: "XXXXXXXXXXXXXXXXXXXX",
+        app: "petclinic",
+        environment: "conf21"
+        }); </script>
+
+The Spring PetClinic application uses a single html page as the "layout" page that is reused across all pages of the application. This is the perfect location to insert the Splunk RUM Instrumentation Library as it will be loaded in all pages automatically.
+
+Let's then edit the layout page:
+
+    vim src/main/resources/templates/fragments/layout.html
+
+and let's insert the snipped we generated above in the < HEAD > section of the page.
+
+Now we need to rebuild the application and run it again:
+
+    ./mvnw package -Dmaven.test.skip=true
+    java  -javaagent:./splunk-otel-javaagent.jar -jar target/spring-petclinic-*-SNAPSHOT.jar
+
+Then let's visit the application again to generate more traffic, not we should see RUM traces being reported.
+
+    http://<VM_IP_ADDRESS>:8080 
+
+(feel free to navigate and click around )
+
+Let's visit RUM and see some of the traces and metrics.
+
+Hamburger Menu >> RUM
+
+You should see some of the Spring PetClinic urls showing up in the UI
+
+--------------------------------------------------
+### Splunk Log Observer (LO)
+For the Splunk Log Observer component, we will configure the Spring PetClinic application to write logs to a file in the filesystem. After that, we will configure the Splunk OpenTelemetry Collect to read (tail) that log file and report the information to the Splunk Observability Platform.
+
+#### Spring Pet Clinic Logback Setting
+The Spring PetClinic application can be configure to use a number of different java logging libraries. In this scenario, we are using logback. Here's a sample logback configuration file:
+
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE xml>
+    <configuration scan="true" scanPeriod="30 seconds">
+      <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+         <resetJUL>true</resetJUL>
+      </contextListener>
+      <!-- <logger name="org.hibernate" level="debug"/> -->
+      <logger name="org.springframework.samples.petclinic" level="debug"/>
+      <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>/tmp/spring-petclinic.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+          <fileNamePattern>springLogFile.%d{yyyy-MM-dd}.log</fileNamePattern>
+          <maxHistory>5</maxHistory>
+          <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+          <pattern>
+          %d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg trace_id=%X{trace_id} span_id=%X{span_id} trace_flags=%X{trace_flags} service.name=%property{otel.resource.service.name}, deployment.environment=%property{otel.resource.deployment.environment} %n
+          </pattern>
+        </encoder>
+      </appender>
+      <root level="debug">
+        <appender-ref ref="file" />
+      </root>
+    </configuration>
+
+We just need to create a file named logback.xml in the configuration folder. 
+
+    vim /src/main/resources/logback.xml
+
+and paste the XML content from the snippet above.
+
+#### Splunk Open Telemetry Collector (FluentD)  Configuration
+(Add setting to fluentd)
+
+Sudo vim /etc/otel/collector/fluentd/conf.d/petclinic.conf
+
+(paste)
+<source>
+  @type tail
+  @label @SPLUNK
+  tag petclinic.app
+  path /tmp/spring-petclinic.log
+  pos_file /tmp/spring-petclinic.pos_file
+  read_from_head false
+ <parse>
+   @type none
+ </parse>
+</source>
+
+(restart fluentd)
+sudo systemctl restart td-agent
+
+(Add LogBack Settings to the folder)
+vim /home/ubuntu/spring-petclinic/src/main/resources/logback.xml
+
+(paste XML)
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<configuration scan="true" scanPeriod="30 seconds">
+  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+     <resetJUL>true</resetJUL>
+  </contextListener>
+  <!-- <logger name="org.hibernate" level="debug"/> -->
+  <logger name="org.springframework.samples.petclinic" level="debug"/>
+  <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>/tmp/spring-petclinic.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>springLogFile.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>5</maxHistory>
+      <totalSizeCap>1GB</totalSizeCap>
+    </rollingPolicy>
+    <encoder>
+            <pattern>
+                    %d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg trace_id=%X{trace_id} span_id=%X{span_id} trace_flags=%X{trace_flags} service.name=%property{otel.resource.service.name}, deployment.environment=%property{otel.resource.deployment.environment} %n
+    </pattern>
+</encoder>
+  </appender>
+  <root level="debug">
+    <appender-ref ref="file" />
+  </root>
+</configuration>
+
+(repackage app)
+
+./mvnw package -Dmaven.test.skip=true
+
+(run again)
+java  -javaagent:./splunk-otel-javaagent.jar -Dsplunk.metrics.enabled=true -jar target/spring-petclinic-2.4.5.jar
+
+curl localhost:8080
+
+Hamburguer Menu > Log Observer > Filter hostname
