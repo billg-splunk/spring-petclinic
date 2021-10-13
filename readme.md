@@ -287,7 +287,7 @@ The Spring PetClinic application can be configure to use a number of different j
 
 We just need to create a file named logback.xml in the configuration folder. 
 
-    vim /src/main/resources/logback.xml
+    vim src/main/resources/logback.xml
 
 and paste the XML content from the snippet above. After that, we need to rebuild the application and run it again:
 
