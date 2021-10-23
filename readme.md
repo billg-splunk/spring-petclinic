@@ -264,9 +264,15 @@ So we need to create the file
 
     sudo vim /etc/otel/collector/fluentd/conf.d/petclinic.conf
 
+We also need to change permission and ownership of the petclinic.conf file
+
+    sudo chown td-agent:td-agent /etc/otel/collector/fluentd/conf.d/petclinic.conf
+    sudo chmod 755 /etc/otel/collector/fluentd/conf.d/petclinic.conf
+
 And paste the contents from the snippet above. Once the file is created, we need to restart the FluentD process
 
     sudo systemctl restart td-agent
+
 
 #### Spring Pet Clinic Logback Setting
 The Spring PetClinic application can be configure to use a number of different java logging libraries. In this scenario, we are using logback. Here's a sample logback configuration file:
