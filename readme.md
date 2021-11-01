@@ -174,6 +174,21 @@ At the end of the wizard, you'll be given a set of commands to run (similar to t
     export OTEL_RESOURCE_ATTRIBUTES='deployment.environment=conf21,version=0.314'
     export OTEL_EXPORTER_OTLP_ENDPOINT='http://localhost:4317'
 
+
+*(OPTIONAL: Splunk AlwaysOn Profiling: If you want to enable and test the AlwaysOn Profiling feature (currently beta), you can find details here: https://github.com/signalfx/splunk-otel-java/blob/main/profiler/README.md)*
+
+To use the Splunk AlwaysOn Profiler you need:
+1. Profiler needs to be enabled for your account (at least while the feature is under beta), contact your Splunk Observability Sales Rep/Engineer to get it configured.
+2. Enable the profiler via environment property:
+
+*(this enables profiling in the Splunk Java Otel Instrumentation Library)*
+
+    
+    export SPLUNK_PROFILER_ENABLED='true'
+    
+
+
+
 *(these commands define settings required by the instrumentation library)*
 
 Lastly, we will run our application adding the -javaagent tag in front of the command
