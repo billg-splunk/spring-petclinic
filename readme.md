@@ -1,7 +1,7 @@
 
 # Splunk Observability - Getting started
 
-This repo started as a fork of the classic Spring Pet Clinic repo and it was used during a presentation about Splunk Observability.
+_This repo started as a fork of the classic Spring Pet Clinic repo and it was used during a presentation about Splunk Observability._
 
 The goal is to walk through the basic steps to configure the following components of the Splunk Observability platform:
 
