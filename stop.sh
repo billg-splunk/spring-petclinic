@@ -1,2 +1,2 @@
 #!/bin/bash
-sudo systemctl stop bloggerator.service
+sudo systemctl stop spring-pet-clinic.service
