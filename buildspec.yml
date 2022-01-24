@@ -7,24 +7,7 @@ phases:
 
 artifacts:
   files:
-    - target/spring-petclinic-2.4.5.jar
-  secondary-artifacts:
-    artifact1:
-      base-directory: $CODEBUILD_SRC_DIR
-      files:
-        - appspec.yml
-    artifact2:
-      base-directory: $CODEBUILD_SRC_DIR
-      files:
-        - start.sh
-    artifact3:
-      base-directory: $CODEBUILD_SRC_DIR
-      files:
-        - stop.sh
-    artifact4:
-      base-directory: $CODEBUILD_SRC_DIR
-      files:
-        - validate.sh
+    - '**/*'
 
 cache:
   paths:
