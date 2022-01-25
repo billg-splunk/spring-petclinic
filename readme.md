@@ -1,5 +1,5 @@
 
-# Splunk Observability - Getting started
+# Splunk Observability - Getting started!!
 
 _This repo started as a fork of the classic Spring Pet Clinic repo and it was used during a presentation about Splunk Observability._
 
