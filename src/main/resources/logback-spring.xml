@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+	<include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+	<contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+		<resetJUL>true</resetJUL>
+	</contextListener>
+	<property name="otel-resource-attributes" value="${OTEL_RESOURCE_ATTRIBUTES}"/>
+	<property name="otel-service-name" value="${OTEL_SERVICE_NAME}"/>
+	<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%-4relative [%thread] %-5level %logger{35} service.name=[${otel-service-name}], otel-attrs=[${otel-resource-attributes}] - %msg%n</pattern>
+			<charset>${CONSOLE_LOG_CHARSET}</charset>
+		</encoder>
+	</appender>
+	<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>/tmp/${OTEL_SERVICE_NAME}.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>/tmp/${OTEL_SERVICE_NAME}.%d{yyyy-MM-dd_HH_mm}.log</fileNamePattern>
+			<maxHistory>5</maxHistory>
+			<totalSizeCap>500MB</totalSizeCap>
+		</rollingPolicy>
+		<encoder>
+			<pattern>%-4relative [%thread] %-5level %logger{35} service.name=[${otel-service-name}], otel-attrs=[${otel-resource-attributes}] - %msg%n</pattern>
+		</encoder>
+	</appender>
+	<root level="DEBUG">
+		<appender-ref ref="FILE" />
+	</root>
+	<root level="INFO">
+		<appender-ref ref="CONSOLE"/>
+	</root>
+	<logger name="org.springframework.web" level="DEBUG"/>
+</configuration>
