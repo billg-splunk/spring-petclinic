@@ -8,7 +8,7 @@
 	<property name="otel-service-name" value="${OTEL_SERVICE_NAME}"/>
 	<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
-			<pattern>%-4relative [%thread] %-5level %logger{35} service.name=[${otel-service-name}], otel-attrs=[${otel-resource-attributes}] - %msg%n</pattern>
+			<pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %thread - %logger{36} service: %property{otel.resource.service.name}, env: %property{otel.resource.deployment.environment} trace_id=%X{trace_id} span_id=%X{span_id} trace_flags=%X{trace_flags} %msg%n</pattern>
 			<charset>${CONSOLE_LOG_CHARSET}</charset>
 		</encoder>
 	</appender>
@@ -20,7 +20,7 @@
 			<totalSizeCap>500MB</totalSizeCap>
 		</rollingPolicy>
 		<encoder>
-			<pattern>%-4relative [%thread] %-5level %logger{35} service.name=[${otel-service-name}], otel-attrs=[${otel-resource-attributes}] - %msg%n</pattern>
+			<pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %thread - %logger{36} service: %property{otel.resource.service.name}, env: %property{otel.resource.deployment.environment} trace_id=%X{trace_id} span_id=%X{span_id} trace_flags=%X{trace_flags} %msg%n</pattern>
 		</encoder>
 	</appender>
 	<root level="DEBUG">
