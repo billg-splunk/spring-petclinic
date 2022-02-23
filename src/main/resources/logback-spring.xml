@@ -13,9 +13,9 @@
 		</encoder>
 	</appender>
 	<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<file>/tmp/${OTEL_SERVICE_NAME}.log</file>
+		<file>/tmp/petclinic.log</file>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<fileNamePattern>/tmp/${OTEL_SERVICE_NAME}.%d{yyyy-MM-dd_HH_mm}.log</fileNamePattern>
+			<fileNamePattern>/tmp/petclinic.%d{yyyy-MM-dd_HH_mm}.log</fileNamePattern>
 			<maxHistory>5</maxHistory>
 			<totalSizeCap>500MB</totalSizeCap>
 		</rollingPolicy>
