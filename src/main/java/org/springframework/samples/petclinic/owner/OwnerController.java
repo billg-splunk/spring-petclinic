@@ -43,7 +43,7 @@ class OwnerController {
 
 	private final OwnerRepository owners;
 
-	private VisitRepository visits;
+	private final VisitRepository visits;
 
 	public OwnerController(OwnerRepository clinicService, VisitRepository visits) {
 		this.owners = clinicService;
@@ -83,7 +83,8 @@ class OwnerController {
 	public String processFindForm(Owner owner, BindingResult result, Map<String, Object> model) {
 		try {
 			Thread.sleep(5000);
-		} catch (InterruptedException e) {
+		}
+		catch (InterruptedException e) {
 		}
 
 		// allow parameterless GET request for /owners to return all records
